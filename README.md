@@ -1,2 +1,3 @@
-# sue
- Alternative SmileBASIC Source Client
+rules:
+
+fuck you
