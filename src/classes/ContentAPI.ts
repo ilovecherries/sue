@@ -1,5 +1,5 @@
 class ContentAPI {
-    public static readonly API_LINK = "https://dev.smilebasicsource.com/api/"
+    public static readonly API_LINK = "api/"
 }
 
 export default ContentAPI;

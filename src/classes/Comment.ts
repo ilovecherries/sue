@@ -1,5 +1,4 @@
 import { UserData } from './User';
-import ContentAPI from './ContentAPI';
 
 export interface CommentSettings {
     // The markup type of the comment
@@ -24,8 +23,8 @@ export interface CommentData extends CommentToSend {
     id: number;
 }
 
-export class Comment {
-    private static readonly API_LINK = ContentAPI.API_LINK + "Comment";
+export class Comment implements CommentData {
+    private static readonly API_LINK = "api/Comment";
     createDate: string;
     editDate: string;
     createUserId: number;
@@ -40,24 +39,30 @@ export class Comment {
     textContent: string;
 
     // sends comment data and returns the sent comment
-    public static send(data: CommentToSend, authtoken: string): Promise<Comment> {
+    public static send(content: string, settings: CommentSettings, 
+                       pageId: number, authtoken: string): Promise<Comment> {
+        let data: CommentToSend = {
+            content: `${JSON.stringify(settings)}\n${content}`,
+            parentId: pageId
+        }
+        console.log(JSON.stringify(data))
         return fetch(Comment.API_LINK, {
                    method: "POST",
                    body: JSON.stringify(data),
                    headers: {
-                       'Content-Type': 'application/json',
-                       'Authorization': 'Bearer ' + authtoken
+                       'Content-Type': 'text/json',
+                       'Authorization': `Bearer ${authtoken}`
                    }
                })
                .then(response => response.json())
-               .then(json => (new Comment(json.results)));
+               .then(json => (new Comment(json)));
     }
 
     // get comment by ID
     public static getByID(id: number): Promise<Comment> {
-        return fetch(`${Comment.API_LINK}Ids=${id}`)
+        return fetch(`${Comment.API_LINK}?Ids=${id}`)
                .then(response => response.json())
-               .then(json => (new Comment(json.results[0])));
+               .then(json => (new Comment(json[0])));
     }
 
     constructor(commentData: CommentData, userlist: UserData[]=[]) {
@@ -109,7 +114,7 @@ export class Comment {
             method: 'PUT',
             body: JSON.stringify(this),
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'text/json',
                 'Authorization': 'Bearer ' + authtoken
             }
         })
