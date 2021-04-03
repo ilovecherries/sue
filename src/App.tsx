@@ -3,19 +3,20 @@ import { Comment } from './classes/Comment'
 import './App.css';
 
 function App() {
-  const [comment, setComment] = useState<Comment | undefined>(undefined);
+  const [comment, setComment] = useState<Array<Comment> | undefined>(undefined);
 
   // load a comment from the server
   useEffect(() => {
-    Comment.send('hello, world', {}, 6661, '')
-      .then(x => setComment(x));
+    // Comment.send('hello, world', {}, 384, ContentAPI.TEST_AUTHTOKEN)
+    //   .then(x => setComment(x));
+    Comment.getWithLimit(5, 384)
+      .then((x: Array<Comment>) => setComment(x));
   }, []);
 
   return (
     <div>
-      {comment !== undefined &&
-        <span>{comment.textContent}</span>
-      }
+      {comment !== undefined && comment.reverse().map((x: Comment) => 
+        <div key={x.id}>{x.createUserId} {x.textContent}</div>)}
     </div>
   );
 }

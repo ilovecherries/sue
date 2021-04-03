@@ -1,3 +1,4 @@
+import ContentAPI from './ContentAPI';
 import { UserData } from './User';
 
 export interface CommentSettings {
@@ -24,7 +25,7 @@ export interface CommentData extends CommentToSend {
 }
 
 export class Comment implements CommentData {
-    private static readonly API_LINK = "api/Comment";
+    private static readonly API_LINK = ContentAPI.API_LINK + "Comment";
     createDate: string;
     editDate: string;
     createUserId: number;
@@ -63,6 +64,18 @@ export class Comment implements CommentData {
         return fetch(`${Comment.API_LINK}?Ids=${id}`)
                .then(response => response.json())
                .then(json => (new Comment(json[0])));
+    }
+
+    // get last sent comments in selected parentID with length LIMIT
+    public static getWithLimit(limit: number, 
+        parentID: undefined | number = undefined): Promise<Array<Comment>> {
+        let url = `${Comment.API_LINK}?Limit=${limit}&Reverse=true`;
+        if (parentID !== undefined) {
+            url += `&ParentIds=${parentID}`;
+        }
+        return fetch(url)
+                .then(response => response.json())
+                .then(json => json.map((x: CommentData) => new Comment(x)).reverse());
     }
 
     constructor(commentData: CommentData, userlist: UserData[]=[]) {
