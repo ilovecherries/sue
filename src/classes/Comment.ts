@@ -45,11 +45,19 @@ export class Comment {
                    method: "POST",
                    body: JSON.stringify(data),
                    headers: {
-                       'Content-Type': 'application/json'
+                       'Content-Type': 'application/json',
+                       'Authorization': 'Bearer ' + authtoken
                    }
                })
                .then(response => response.json())
                .then(json => (new Comment(json.results)));
+    }
+
+    // get comment by ID
+    public static getByID(id: number): Promise<Comment> {
+        return fetch(`${Comment.API_LINK}Ids=${id}`)
+               .then(response => response.json())
+               .then(json => (new Comment(json.results[0])));
     }
 
     constructor(commentData: CommentData, userlist: UserData[]=[]) {
@@ -95,13 +103,18 @@ export class Comment {
         }
     }
 
-    edit(newContent: string) {
+    edit(content: string, settings: CommentSettings, authtoken: string) {
+        this.content = `${JSON.stringify(settings)}\n${content}`;
         fetch(`${Comment.API_LINK}/${this.id}`, {
             method: 'PUT',
             body: JSON.stringify(this),
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authtoken
             }
         })
     }
+
+    // TODO: Add delete comment functionality
+    // TODO: Add 
 }
