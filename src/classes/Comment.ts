@@ -50,7 +50,7 @@ export class Comment implements CommentData {
                    method: "POST",
                    body: JSON.stringify(data),
                    headers: {
-                       'Content-Type': 'text/json',
+                       'Content-Type': 'application/json',
                        'Authorization': `Bearer ${authtoken}`
                    }
                })
