@@ -1,5 +1,5 @@
 import ContentAPI from './ContentAPI';
-import { UserData } from './User';
+import { User, UserData } from './User';
 
 export interface CommentSettings {
     // The markup type of the comment
@@ -26,6 +26,7 @@ export interface CommentData extends CommentToSend {
 
 export class Comment implements CommentData {
     private static readonly API_LINK = ContentAPI.API_LINK + "Comment";
+    public static messageEvents: Array<Function> = [];
     createDate: string;
     editDate: string;
     createUserId: number;
@@ -38,6 +39,7 @@ export class Comment implements CommentData {
     editUser?: UserData;
     settings: CommentSettings;
     textContent: string;
+    // TODO: Add DOM element for rendered message
 
     // sends comment data and returns the sent comment
     public static send(content: string, settings: CommentSettings, 
@@ -66,9 +68,18 @@ export class Comment implements CommentData {
                .then(json => (new Comment(json[0])));
     }
 
+    // TODO: Add hooks for both before and after going through 12y parser
+    // userJS for chat
+    public static addMessageEvent(code: string): void {
+        // eslint-disable-next-line no-eval
+        Comment.messageEvents.push((message: Comment) => window.eval(code)(message));
+    }
+
     // get last sent comments in selected parentID with length LIMIT
     public static getWithLimit(limit: number, 
         parentID: undefined | number = undefined): Promise<Array<Comment>> {
+        /* FIXME: Replace with Chainer instead of direct API call so that
+           we can grab the userlist */
         let url = `${Comment.API_LINK}?Limit=${limit}&Reverse=true`;
         if (parentID !== undefined) {
             url += `&ParentIds=${parentID}`;
@@ -90,7 +101,9 @@ export class Comment implements CommentData {
         // these find if a certain user is in the userlist and we store them
         // for convenience later on
         this.createUser = userlist.find(user => user.id === this.createUserId);
+        if (this.createUser !== undefined) this.createUser = new User(this.createUser)
         this.editUser = userlist.find(user => user.id === this.editUserId);
+        if (this.editUser !== undefined) this.editUser = new User(this.editUser)
         // extract the settings from the text
         try {
             let firstNewline = this.content.indexOf('\n');
@@ -106,6 +119,10 @@ export class Comment implements CommentData {
             this.settings = {};
             this.textContent = this.content;
         }
+
+        Comment.messageEvents.forEach(event => {
+            event(this);
+        })
     }
 
     toJSON() {
@@ -134,5 +151,4 @@ export class Comment implements CommentData {
     }
 
     // TODO: Add delete comment functionality
-    // TODO: Add 
 }
