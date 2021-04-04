@@ -1,4 +1,5 @@
 import ContentAPI from './ContentAPI';
+import { Hook, HookInterface } from './Hooks';
 import { User, UserData } from './User';
 
 export interface CommentSettings {
@@ -26,7 +27,7 @@ export interface CommentData extends CommentToSend {
 
 export class Comment implements CommentData {
     private static readonly API_LINK = ContentAPI.API_LINK + "Comment";
-    public static messageEvents: Array<Function> = [];
+    public static hooks: HookInterface<Comment>
     createDate: string;
     editDate: string;
     createUserId: number;
@@ -68,11 +69,9 @@ export class Comment implements CommentData {
                .then(json => (new Comment(json[0])));
     }
 
-    // TODO: Add hooks for both before and after going through 12y parser
-    // userJS for chat
+
     public static addMessageEvent(code: string): void {
-        // eslint-disable-next-line no-eval
-        Comment.messageEvents.push((message: Comment) => window.eval(code)(message));
+        Comment.hooks.addPostHookEvent(new Hook<Comment>(code));
     }
 
     // get last sent comments in selected parentID with length LIMIT
@@ -120,9 +119,7 @@ export class Comment implements CommentData {
             this.textContent = this.content;
         }
 
-        Comment.messageEvents.forEach(event => {
-            event(this);
-        })
+        Comment.hooks.callHooks(this, () => {});
     }
 
     toJSON() {
