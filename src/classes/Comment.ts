@@ -4,7 +4,7 @@ import { User, UserData } from './User';
 
 export interface CommentSettings {
     // The markup type of the comment
-    m?: string;
+    m: string;
     // The bridge username
     b?: string;
     // The nickname attached to the comment
@@ -27,7 +27,7 @@ export interface CommentData extends CommentToSend {
 
 export class Comment implements CommentData {
     private static readonly API_LINK = ContentAPI.API_LINK + "Comment";
-    public static hooks: HookInterface<Comment>
+    public static hooks: HookInterface<Comment> = new HookInterface<Comment>();
     createDate: string;
     editDate: string;
     createUserId: number;
@@ -36,10 +36,11 @@ export class Comment implements CommentData {
     id: number;
     parentId: number;
     content: string;
-    createUser?: UserData;
-    editUser?: UserData;
+    createUser: User;
+    editUser: User;
     settings: CommentSettings;
     textContent: string;
+    DOMElement: HTMLDivElement;
     // TODO: Add DOM element for rendered message
 
     // sends comment data and returns the sent comment
@@ -77,15 +78,23 @@ export class Comment implements CommentData {
     // get last sent comments in selected parentID with length LIMIT
     public static getWithLimit(limit: number, 
         parentID: undefined | number = undefined): Promise<Array<Comment>> {
-        /* FIXME: Replace with Chainer instead of direct API call so that
-           we can grab the userlist */
-        let url = `${Comment.API_LINK}?Limit=${limit}&Reverse=true`;
+        // TODO: Replace with Chainer dedicated class
+        let settings: any = {
+            'reverse': true,
+            'limit': limit
+        };
+        if (parentID)
+            settings.parentID = parentID;
+        let url = `${ContentAPI.API_LINK}Read/chain/?requests=comment-${JSON.stringify(settings)}&requests=user.0createUserId&requests=user.0editUserId`;
         if (parentID !== undefined) {
             url += `&ParentIds=${parentID}`;
         }
         return fetch(url)
                 .then(response => response.json())
-                .then(json => json.map((x: CommentData) => new Comment(x)).reverse());
+                .then(json => {
+                    console.log(json);
+                    return json['comment'].map((x: CommentData) => new Comment(x, json['user'])).reverse()
+                });
     }
 
     constructor(commentData: CommentData, userlist: UserData[]=[]) {
@@ -99,10 +108,16 @@ export class Comment implements CommentData {
         this.id = commentData.id;
         // these find if a certain user is in the userlist and we store them
         // for convenience later on
-        this.createUser = userlist.find(user => user.id === this.createUserId);
-        if (this.createUser !== undefined) this.createUser = new User(this.createUser)
-        this.editUser = userlist.find(user => user.id === this.editUserId);
-        if (this.editUser !== undefined) this.editUser = new User(this.editUser)
+        let createUserData = userlist.find(user => user.id === this.createUserId);
+        if (createUserData !== undefined) 
+            this.createUser = new User(createUserData)
+        else
+            throw new Error('Cannot find create user ID in the userlist. Is this a malformed chain call?');
+        let editUserData = userlist.find(user => user.id === this.editUserId);
+        if (editUserData !== undefined) 
+            this.editUser = new User(editUserData)
+        else
+            throw new Error('Cannot find create user ID in the userlist. Is this a malformed chain call?');
         // extract the settings from the text
         try {
             let firstNewline = this.content.indexOf('\n');
@@ -115,11 +130,15 @@ export class Comment implements CommentData {
         // settings sent in the message
         } catch (Error) {
             console.error(Error);
-            this.settings = {};
+            this.settings = {m: '12y'};
             this.textContent = this.content;
         }
+        // run the 
+        this.DOMElement = document.createElement('div');
 
-        Comment.hooks.callHooks(this, () => {});
+        Comment.hooks.callHooks(this, () => {
+            // this.DOMElement.append(Parse.(this.textContent, this.settings.m));
+        });
     }
 
     toJSON() {

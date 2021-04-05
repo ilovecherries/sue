@@ -9,7 +9,9 @@ export default function App() {
   useEffect(() => {
     // Comment.send('hello, world', {}, 384, ContentAPI.TEST_AUTHTOKEN)
     //   .then(x => setComment(x));
-    Comment.addMessageEvent("(function(message){message.textContent='Overwriting Text Content'})")
+    Comment.addMessageEvent(
+      "(function(message){message.textContent=message.createUser.username + 's message'})"
+    )
     Comment.getWithLimit(5, 384)
       .then((x: Array<Comment>) => setComment(x));
   }, []);
@@ -17,7 +19,11 @@ export default function App() {
   return (
     <div>
       {comment !== undefined && comment.reverse().map((x: Comment) => 
-        <div key={x.id}>{x.createUserId} {x.textContent}</div>)}
+        <div key={x.id}>
+          <img 
+            src={x.createUser.getAvatarLink(64)} 
+            alt={`${x.createUser.username}'s avatar`}></img>
+          {x.textContent}</div>)}
     </div>
   );
 }
