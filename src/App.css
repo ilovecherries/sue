@@ -1,5 +1,13 @@
 .App {
-  text-align: center;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: grid;
+  grid-template-rows: 100vh auto auto;
 }
 
 .App-logo {
@@ -35,4 +43,30 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.message {
+  display: grid;
+  row-gap: 0.5rem;
+  column-gap: 0.5rem;
+  grid-template-columns: 4rem auto;
+  margin: 0.5rem 0;
+}
+
+.avatar {
+  display: inline;
+  margin-left: 0.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-right: 0.5rem;
+}
+
+.message-block {
+  display: inline;
+}
+
+.chat-pane {
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
 }

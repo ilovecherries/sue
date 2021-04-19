@@ -84,16 +84,15 @@ export class Comment implements CommentData {
             'limit': limit
         };
         if (parentID)
-            settings.parentID = parentID;
+            settings.parentIds = [parentID];
         let url = `${ContentAPI.API_LINK}Read/chain/?requests=comment-${JSON.stringify(settings)}&requests=user.0createUserId&requests=user.0editUserId`;
-        if (parentID !== undefined) {
-            url += `&ParentIds=${parentID}`;
-        }
         return fetch(url)
                 .then(response => response.json())
                 .then(json => {
                     console.log(json);
-                    return json['comment'].map((x: CommentData) => new Comment(x, json['user'])).reverse()
+                    return json['comment']
+                        .filter((x: CommentData) => !x.deleted)
+                        .map((x: CommentData) => new Comment(x, json['user'])).reverse()
                 });
     }
 
@@ -111,8 +110,9 @@ export class Comment implements CommentData {
         let createUserData = userlist.find(user => user.id === this.createUserId);
         if (createUserData !== undefined) 
             this.createUser = new User(createUserData)
-        else
+        else {
             throw new Error('Cannot find create user ID in the userlist. Is this a malformed chain call?');
+        }
         let editUserData = userlist.find(user => user.id === this.editUserId);
         if (editUserData !== undefined) 
             this.editUser = new User(editUserData)

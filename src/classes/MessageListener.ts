@@ -45,11 +45,14 @@ export default class MessageListener {
                         new Comment(c, response.chains.user)
                     );
                     this.callbacks.forEach((callback: Function) => {
-                        comments.forEach((comment: Comment) => {callback(comment)})
+                        callback(comments)
                     });
                     this.call();
                 })
-                .catch((error: Error) => {console.error(error)})
+                .catch((error: Error) => {
+                    console.error(error)
+                    this.call();
+                })
         }   
     }
 
