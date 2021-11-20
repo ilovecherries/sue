@@ -1,3 +1,3 @@
 rules:
 
-fuck you
+hi you :)
